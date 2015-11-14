@@ -28,6 +28,7 @@ cloudant.db.list(function(err, allDbs) {
 
 var db = cloudant.db.use("stores_db");
 
+
 //VERY DANGEROUS
 //db.insert({_rev: '2-cc5825485a9b2f66d79b8a849e162g2f', "type":"FULL"}, function(err, body) {});
 //db.insert({_rev: '2-0f20a52060bf4e69acf1cd345ba18821', "type":"COPY"}, function(err, body) {});
@@ -85,6 +86,8 @@ artemis.get('/', function(req, res) {
     });
 });
 
+var userdata = require('./userdata.js');
+
 // Displays current version of server APIs
 artemis.get('/:postal', function(req, res) {
     var postal =  req.params.postal;
@@ -105,9 +108,12 @@ artemis.get('/:postal', function(req, res) {
 	var stores = zipdata[postal];
 	if(postal in zipdata && stores.length > 0) {
 		console.log("STORE: " + stores[0].STORENUMBER);
+		userdata.fetchUserProducts(devid, res, respond, stores);
 	} else {
 		console.log("No stores in vicinity");
 	}
+
+/*
 	var respObj = {
 		artemis: "ok",
 		postal:  req.params.postal,
@@ -117,9 +123,19 @@ artemis.get('/:postal', function(req, res) {
 		allDbs: payloadTmp
     	};
 	res.status(200).json(respObj);
+*/
     });
-
-    
 });
+
+var respond = function(res, stores, prods) {
+	var respObj = {
+		artemis: "ok",
+		prods: prods,
+		stores: stores,
+		version: 1,
+		allDbs: payloadTmp
+	};
+	res.status(200).json(respObj);
+}
 
 module.exports = artemis;
