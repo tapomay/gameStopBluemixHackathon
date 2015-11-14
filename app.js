@@ -1,51 +1,43 @@
-/**
- * @license
- * Licensed Materials - Property of IBM
- * 5725-I43 (C) Copyright IBM Corp. 2014, 2015. All Rights Reserved.
- * US Government Users Restricted Rights - Use, duplication or
- * disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
- */
+/*
+ * IBM Confidential OCO Source Materials
+ *
+ * 5725-I43 Copyright IBM Corp. 2015
+ *
+ * The source code for this program is not published or otherwise
+ * divested of its trade secrets, irrespective of what has
+ * been deposited with the U.S. Copyright Office.
+ *
+*/
 
-var express = require('express');
-var passport = require('passport');
-var ImfBackendStrategy = require('passport-imf-token-validation').ImfBackendStrategy;
-var imf = require('imf-oauth-user-sdk');
-
-passport.use(new ImfBackendStrategy());
-
-var app = express();
-app.use(passport.initialize());
-
-//redirect to mobile backend application doc page when accessing the root context
-app.get('/', function(req, res){
-	res.sendfile('public/index.html');
+ // Just in case we missed something
+process.on('uncaughtException', function(err){
+  console.log('Caught exception: ' + err.stack);
 });
 
-// create a public static content service
-app.use("/public", express.static(__dirname + '/public'));
+// External dependencies
+var express = require('express');
+var cors = require('cors');
+var http = require('http');
+var https = require('https');
 
-// create another static content service, and protect it with imf-backend-strategy
-app.use("/protected", passport.authenticate('imf-backend-strategy', {session: false }));
-app.use("/protected", express.static(__dirname + '/protected'));
+// Internal dependencies
+var router = require('./app/routes/router.js');
 
-// create a backend service endpoint
-app.get('/publicServices/generateToken', function(req, res){
-		// use imf-oauth-user-sdk to get the authorization header, which can be used to access the protected resource/endpoint by imf-backend-strategy
-		imf.getAuthorizationHeader().then(function(token) {
-			res.send(200, token);
-		}, function(err) {
-			console.log(err);
-		});
-	}
-);
+// Set how many concurrent sockets can be open for all http client requests
+http.globalAgent.maxSockets = 100;
+https.globalAgent.maxSockets = 100;
 
-//create another backend service endpoint, and protect it with imf-backend-strategy
-app.get('/protectedServices/test', passport.authenticate('imf-backend-strategy', {session: false }),
-		function(req, res){
-			res.send(200, "Successfully access to protected backend endpoint.");
-		}
-);
+// Setup app
+var app = express();
+app.use(cors());
 
-var port = (process.env.VCAP_APP_PORT || 3000);
-app.listen(port);
-console.log("mobile backend app is listening at " + port);
+// Set routes
+app.use(router);
+
+//Start servers
+//console.log("app init: env = " + JSON.stringify(process.env));
+app.set('port', process.env.VCAP_APP_PORT || process.env.PORT || 3000);
+var server = app.listen(app.get('port'), function() {
+  console.log('CONSOLE LOG: Express server listening on port ' + server.address().port + "; host = " + server.address().address );
+});
+
