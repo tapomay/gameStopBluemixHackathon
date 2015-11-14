@@ -36,7 +36,8 @@ router.use(function(req, res, next) {
 router.use('/artemis', artemis);
 
 // If custom oauth enabled, routes all /apps related traffic
-/*var cpString = process.env.ENABLE_CUSTOM_PROVIDER || 'yes';
+var cpString = process.env.ENABLE_CUSTOM_PROVIDER || 'yes';
+/*
 if ( cpString === 'yes' ) {
     var customoauth = require('./customoauthprovider/customoauth.js');
     router.use('/apps', customoauth);
